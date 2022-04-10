@@ -1,0 +1,1854 @@
+// NA 2019/2020: Zadaća 2, Zadatak 1
+#include <cmath>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <math.h>
+#include <stdexcept>
+#include <vector>
+
+class Vector {
+  std::vector<double> v;
+
+public:
+  explicit Vector(int n);
+  Vector(std::initializer_list<double> l);
+  int NElems() const;
+  double &operator[](int i);
+  double operator[](int i) const;
+  double &operator()(int i);
+  double operator()(int i) const;
+  double Norm() const;
+  friend double VectorNorm(const Vector &v);
+  double GetEpsilon() const;
+  void Print(char separator = '\n', double eps = -1) const;
+  friend void PrintVector(const Vector &v, char separator = '\n',
+                          double eps = -1) {
+    double eps1 = eps;
+    if (eps < 0)
+      eps1 = v.GetEpsilon();
+    for (int i = 0; i < v.v.size(); i++) {
+      if (fabs(v.v.at(i)) < eps1)
+        std::cout << 0;
+      else
+        std::cout << v.v.at(i);
+      if (i != v.v.size() - 1 || separator == '\n')
+        std::cout << separator;
+    }
+  }
+  friend Vector operator+(const Vector &v1, const Vector &v2);
+  Vector &operator+=(const Vector &v);
+  friend Vector operator-(const Vector &v1, const Vector &v2);
+  Vector &operator-=(const Vector &v);
+  friend Vector operator*(double s, const Vector &v);
+  friend Vector operator*(const Vector &v, double s);
+  Vector &operator*=(double s);
+  friend double operator*(const Vector &v1, const Vector &v2);
+  friend Vector operator/(const Vector &v, double s);
+  Vector &operator/=(double s);
+  void Chop(double eps = -1);
+  bool EqualTo(const Vector &v, double eps = -1) const;
+};
+
+Vector::Vector(int n) {
+  if (n <= 0)
+    throw std::range_error("Bad dimension");
+  v.resize(n);
+}
+
+Vector::Vector(std::initializer_list<double> l) {
+  if (!l.size())
+    throw std::range_error("Bad dimension");
+  for (auto x : l)
+    v.push_back(x);
+}
+
+int Vector::NElems() const { return v.size(); }
+
+double &Vector::operator[](int i) { return v.at(i); }
+
+double Vector::operator[](int i) const { return v.at(i); }
+
+double &Vector::operator()(int i) {
+  if (i <= 0 || i > v.size())
+    throw std::range_error("Invalid index");
+  return v.at(i - 1);
+}
+
+double Vector::operator()(int i) const {
+  if (i <= 0 || i > v.size())
+    throw std::range_error("Invalid index");
+  return v.at(i - 1);
+}
+
+double Vector::Norm() const {
+  double sum{};
+  for (auto x : v)
+    sum += x * x;
+  return sqrt(sum);
+}
+
+double VectorNorm(const Vector &v) {
+  double sum{};
+  for (auto x : v.v)
+    sum += x * x;
+  return sqrt(sum);
+}
+
+double Vector::GetEpsilon() const {
+  return 10 * Norm() * std::numeric_limits<double>::epsilon();
+}
+
+void Vector::Print(char separator, double eps) const {
+  double eps1 = eps;
+  if (eps < 0)
+    eps1 = GetEpsilon();
+  for (int i = 0; i < v.size(); i++) {
+    if (fabs(v.at(i)) < eps1)
+      std::cout << 0;
+    else
+      std::cout << v.at(i);
+    if (i != v.size() - 1 || separator == '\n')
+      std::cout << separator;
+  }
+}
+
+Vector operator+(const Vector &v1, const Vector &v2) {
+  if (v1.v.size() != v2.v.size())
+    throw std::domain_error("Incompatible formats");
+  Vector v3(v1.v.size());
+  for (int i = 0; i < v1.v.size(); i++)
+    v3.v.at(i) = (v1.v.at(i) + v2.v.at(i));
+  return v3;
+}
+Vector &Vector::operator+=(const Vector &v) {
+  if (this->v.size() != v.v.size())
+    throw std::domain_error("Incompatible formats");
+  for (int i = 0; i < this->v.size(); i++)
+    this->v.at(i) = (this->v.at(i) + v.v.at(i));
+  return *this;
+}
+
+Vector operator-(const Vector &v1, const Vector &v2) {
+  if (v1.v.size() != v2.v.size())
+    throw std::domain_error("Incompatible formats");
+  Vector v3(v1.v.size());
+  for (int i = 0; i < v1.v.size(); i++)
+    v3.v.at(i) = (v1.v.at(i) - v2.v.at(i));
+  return v3;
+}
+
+Vector &Vector::operator-=(const Vector &v) {
+  if (this->v.size() != v.v.size())
+    throw std::domain_error("Incompatible formats");
+  for (int i = 0; i < this->v.size(); i++)
+    this->v.at(i) = (this->v.at(i) - v.v.at(i));
+  return *this;
+}
+
+Vector operator*(double s, const Vector &v) {
+  Vector v1(v.v.size());
+  for (int i = 0; i < v.v.size(); i++)
+    v1.v.at(i) = (v.v.at(i) * s);
+  return v1;
+}
+
+Vector operator*(const Vector &v, double s) {
+  Vector v1(v.v.size());
+  for (int i = 0; i < v.v.size(); i++)
+    v1.v.at(i) = (v.v.at(i) * s);
+  return v1;
+}
+
+Vector &Vector::operator*=(double s) {
+  for (int i = 0; i < v.size(); i++)
+    v.at(i) = (v.at(i) * s);
+  return *this;
+}
+
+double operator*(const Vector &v1, const Vector &v2) {
+  if (v1.v.size() != v2.v.size())
+    throw std::domain_error("Incompatible formats");
+  double sum{};
+  for (int i = 0; i < v1.v.size(); i++)
+    sum += v1.v.at(i) * v2.v.at(i);
+  return sum;
+}
+
+Vector operator/(const Vector &v, double s) {
+  if (fabs(s) <= v.GetEpsilon() * fabs(s))
+    throw std::domain_error("Division by zero");
+  Vector v1(v.v.size());
+  for (int i = 0; i < v.v.size(); i++)
+    v1.v.at(i) = v.v.at(i) / s;
+  return v1;
+}
+
+Vector &Vector::operator/=(double s) {
+  if (fabs(s) <= GetEpsilon() * fabs(s))
+    throw std::domain_error("Division by zero");
+  for (int i = 0; i < v.size(); i++)
+    v.at(i) /= s;
+  return *this;
+}
+void Vector::Chop(double eps) {
+  if (eps < 0)
+    eps = GetEpsilon();
+  for (int i = 0; i < v.size(); i++)
+    if (v.at(i) < eps)
+      v.at(i) = 0;
+}
+bool Vector::EqualTo(const Vector &v, double eps) const {
+  if (eps < 0)
+    eps = GetEpsilon();
+  if (this->v.size() != v.v.size())
+    return false;
+  for (int i = 0; i < v.v.size(); i++) {
+    if (this->v.at(i) - v.v.at(i) > eps)
+      return false;
+  }
+  return true;
+}
+
+class Matrix {
+  std::vector<std::vector<double>> m;
+
+public:
+  Matrix(int m, int n);
+  Matrix(const Vector &v);
+  Matrix(std::initializer_list<std::vector<double>> l);
+  int NRows() const;
+  int NCols() const;
+  double *operator[](int i);
+  const double *operator[](int i) const;
+  double &operator()(int i, int j);
+  double operator()(int i, int j) const;
+  double Norm() const;
+  friend double MatrixNorm(const Matrix &m);
+  double GetEpsilon() const;
+  void Print(int width = 10, double eps = -1) const;
+  friend void PrintMatrix(const Matrix &m, int width = 10, double eps = -1) {
+    double eps1 = eps;
+    if (eps < 0)
+      eps1 = m.GetEpsilon();
+    for (auto x : m.m) {
+      for (auto y : x) {
+        if (fabs(y) < eps1)
+          std::cout << std::setw(width) << 0;
+        else
+          std::cout << std::setw(width) << y;
+      }
+      std::cout << std::endl;
+    }
+  }
+  friend Matrix operator+(const Matrix &m1, const Matrix &m2);
+  Matrix &operator+=(const Matrix &m);
+  friend Matrix operator-(const Matrix &m1, const Matrix &m2);
+  Matrix &operator-=(const Matrix &m);
+  friend Matrix operator*(double s, const Matrix &m);
+  friend Matrix operator*(const Matrix &m, double s);
+  Matrix &operator*=(double s);
+  friend Matrix operator*(const Matrix &m1, const Matrix &m2);
+  Matrix &operator*=(const Matrix &m);
+  friend Vector operator*(const Matrix &m, const Vector &v);
+  friend Matrix Transpose(const Matrix &m);
+  void Transpose();
+  void Chop(double eps = -1);
+  bool EqualTo(const Matrix &m, double eps = -1) const;
+  friend Matrix LeftDiv(Matrix m1, Matrix m2);
+  friend Vector LeftDiv(Matrix m, Vector v);
+  friend Matrix operator/(const Matrix &m, double s);
+  Matrix &operator/=(double s);
+  friend Matrix operator/(Matrix m1, Matrix m2);
+  Matrix &operator/=(Matrix m);
+  double Det() const;
+  friend double Det(Matrix m);
+  void Invert();
+  friend Matrix Inverse(Matrix m);
+  void ReduceToRREF();
+  friend Matrix RREF(Matrix m);
+  int Rank() const;
+  friend int Rank(Matrix m);
+};
+
+Matrix::Matrix(int m, int n) {
+  if (m <= 0 || n <= 0)
+    throw std::range_error("Bad dimension");
+  this->m.resize(m);
+  for (int i = 0; i < m; i++)
+    this->m.at(i).resize(n);
+}
+
+Matrix::Matrix(const Vector &v) {
+  m.resize(v.NElems());
+  for (int i = 0; i < v.NElems(); i++)
+    m.at(i).push_back(v[i]);
+}
+
+Matrix::Matrix(std::initializer_list<std::vector<double>> l) {
+  if (!l.size())
+    throw std::range_error("Bad dimension");
+  int s = l.begin()->size();
+  for (auto x : l) {
+    if (!x.size())
+      throw std::range_error("Bad dimension");
+    if (x.size() != s)
+      throw std::logic_error("Bad matrix");
+  }
+  m.resize(l.size());
+  int i{};
+  for (auto x : l) {
+    m.at(i++) = x;
+  }
+}
+
+int Matrix::NRows() const { return m.size(); }
+
+int Matrix::NCols() const { return m.at(0).size(); }
+
+double *Matrix::operator[](int i) { return &m.at(i).at(0); }
+
+const double *Matrix::operator[](int i) const { return &m.at(i).at(0); }
+
+double &Matrix::operator()(int i, int j) {
+  if (i > m.size() || i <= 0 || j > m.at(0).size() || j <= 0)
+    throw std::range_error("Invalid index");
+  return m.at(i - 1).at(j - 1);
+}
+
+double Matrix::operator()(int i, int j) const {
+  if (i > m.size() || i <= 0 || j > m.at(0).size() || j <= 0)
+    throw std::range_error("Invalid index");
+  return m.at(i - 1).at(j - 1);
+}
+
+double Matrix::Norm() const {
+  double sum{};
+  for (auto x : m)
+    for (auto y : x)
+      sum += y * y;
+  return sqrt(sum);
+}
+
+double MatrixNorm(const Matrix &m) {
+  double sum{};
+  for (auto x : m.m)
+    for (auto y : x)
+      sum += y * y;
+  return sqrt(sum);
+}
+
+double Matrix::GetEpsilon() const {
+  return 10 * Norm() * std::numeric_limits<double>::epsilon();
+}
+
+void Matrix::Print(int width, double eps) const {
+  double eps1 = eps;
+  if (eps < 0)
+    eps1 = GetEpsilon();
+  for (auto x : m) {
+    for (auto y : x) {
+      if (fabs(y) < eps1)
+        std::cout << std::setw(width) << 0;
+      else
+        std::cout << std::setw(width) << y;
+    }
+    std::cout << std::endl;
+  }
+}
+
+Matrix operator+(const Matrix &m1, const Matrix &m2) {
+  if (m1.m.size() != m2.m.size() || m1.m.at(0).size() != m2.m.at(0).size())
+    throw std::domain_error("Incompatible formats");
+  Matrix m3(m1.m.size(), m1.m.at(0).size());
+  for (int i = 0; i < m1.m.size(); i++)
+    for (int j = 0; j < m1.m.at(0).size(); j++)
+      m3.m.at(i).at(j) = m1.m.at(i).at(j) + m2.m.at(i).at(j);
+  return m3;
+}
+
+Matrix &Matrix::operator+=(const Matrix &m) {
+  if (this->m.size() != m.m.size() || this->m.at(0).size() != m.m.at(0).size())
+    throw std::domain_error("Incompatible formats");
+  for (int i = 0; i < m.m.size(); i++)
+    for (int j = 0; j < m.m.at(0).size(); j++)
+      this->m.at(i).at(j) = this->m.at(i).at(j) + m.m.at(i).at(j);
+  return *this;
+}
+
+Matrix operator-(const Matrix &m1, const Matrix &m2) {
+  if (m1.m.size() != m2.m.size() || m1.m.at(0).size() != m2.m.at(0).size())
+    throw std::domain_error("Incompatible formats");
+  Matrix m3(m1.m.size(), m1.m.at(0).size());
+  for (int i = 0; i < m1.m.size(); i++)
+    for (int j = 0; j < m1.m.at(0).size(); j++)
+      m3.m.at(i).at(j) = m1.m.at(i).at(j) - m2.m.at(i).at(j);
+  return m3;
+}
+
+Matrix &Matrix::operator-=(const Matrix &m) {
+  if (this->m.size() != m.m.size() || this->m.at(0).size() != m.m.at(0).size())
+    throw std::domain_error("Incompatible formats");
+  for (int i = 0; i < m.m.size(); i++)
+    for (int j = 0; j < m.m.at(0).size(); j++)
+      this->m.at(i).at(j) = this->m.at(i).at(j) - m.m.at(i).at(j);
+  return *this;
+}
+
+Matrix operator*(double s, const Matrix &m) {
+  Matrix m1(m.m.size(), m.m.at(0).size());
+  for (int i = 0; i < m.m.size(); i++)
+    for (int j = 0; j < m.m.at(0).size(); j++)
+      m1.m.at(i).at(j) = s * m.m.at(i).at(j);
+  return m1;
+}
+
+Matrix operator*(const Matrix &m, double s) {
+  Matrix m1(m.m.size(), m.m.at(0).size());
+  for (int i = 0; i < m.m.size(); i++)
+    for (int j = 0; j < m.m.at(0).size(); j++)
+      m1.m.at(i).at(j) = s * m.m.at(i).at(j);
+  return m1;
+}
+
+Matrix &Matrix::operator*=(double s) {
+  for (int i = 0; i < m.size(); i++)
+    for (int j = 0; j < m.at(0).size(); j++)
+      m.at(i).at(j) *= s;
+  return *this;
+}
+
+Matrix operator*(const Matrix &m1, const Matrix &m2) {
+  if (m1.m.at(0).size() != m2.m.size())
+    throw std::domain_error("Incompatible formats");
+  Matrix m3(m1.m.size(), m2.m.at(0).size());
+  for (int k = 0; k < m2.m.at(0).size(); k++)
+    for (int i = 0; i < m1.m.size(); i++) {
+      double x{};
+      for (int j = 0; j < m1.m.at(0).size(); j++)
+        x += m1.m.at(i).at(j) * m2.m.at(j).at(k);
+      m3.m.at(i).at(k) = x;
+    }
+  return m3;
+}
+
+Matrix &Matrix::operator*=(const Matrix &m) {
+  if (this->m.at(0).size() != m.m.size())
+    throw std::domain_error("Incompatible formats");
+  Matrix m3(this->m.size(), m.m.at(0).size());
+  for (int k = 0; k < m.m.at(0).size(); k++)
+    for (int i = 0; i < this->m.size(); i++) {
+      double x{};
+      for (int j = 0; j < this->m.at(0).size(); j++)
+        x += this->m.at(i).at(j) * m.m.at(j).at(k);
+      m3.m.at(i).at(k) = x;
+    }
+  this->m = m3.m;
+  return *this;
+}
+
+Vector operator*(const Matrix &m, const Vector &v) {
+  if (m.m.at(0).size() != v.NElems())
+    throw std::domain_error("Incompatible formats");
+  Vector v1(m.m.size());
+  for (int i = 0; i < m.m.size(); i++) {
+    double x{};
+    for (int j = 0; j < m.m.at(0).size(); j++)
+      x += m.m.at(i).at(j) * v[j];
+    v1[i] = x;
+  }
+  return v1;
+}
+
+Matrix Transpose(const Matrix &m) {
+  Matrix m1(m.m.at(0).size(), m.m.size());
+  if (m.m.size() == m.m.at(0).size()) {
+    for (int i = 0; i < m.m.size(); i++) {
+      for (int j = 0; j < i; j++) {
+        m1.m.at(i).at(j) = m.m.at(j).at(i);
+        m1.m.at(j).at(i) = m.m.at(i).at(j);
+      }
+      m1.m.at(i).at(i) = m.m.at(i).at(i);
+    }
+  } else {
+    for (int i = 0; i < m.m.at(0).size(); i++) {
+      for (int j = 0; j < m.m.size(); j++) {
+        m1.m.at(i).at(j) = m.m.at(j).at(i);
+      }
+    }
+  }
+  return m1;
+}
+
+void Matrix::Transpose() {
+  if (m.size() == m.at(0).size()) {
+    for (int i = 0; i < m.size(); i++)
+      for (int j = 0; j < i; j++) {
+        auto x = m.at(i).at(j);
+        m.at(i).at(j) = m.at(j).at(i);
+        m.at(j).at(i) = x;
+      }
+  } else {
+    Matrix m1(m.at(0).size(), m.size());
+    for (int i = 0; i < m.at(0).size(); i++) {
+      for (int j = 0; j < m.size(); j++) {
+        m1.m.at(i).at(j) = m.at(j).at(i);
+      }
+    }
+    m = m1.m;
+  }
+}
+
+void Matrix::Chop(double eps) {
+  if (eps < 0)
+    eps = GetEpsilon();
+  for (int i = 0; i < m.size(); i++)
+    for (int j = 0; j < m.at(0).size(); j++)
+      if (m.at(i).at(j) < eps)
+        m.at(i).at(j) = 0;
+}
+bool Matrix::EqualTo(const Matrix &m, double eps) const {
+  if (eps < 0)
+    eps = GetEpsilon();
+  if (this->m.size() != m.m.size() ||
+      (m.m.size() != 0 && this->m.at(0).size() != m.m.at(0).size()))
+    return false;
+  for (int i = 0; i < m.m.size(); i++) {
+    for (int j = 0; j < m.m.at(0).size(); j++)
+      if (this->m.at(i).at(j) - m.m.at(i).at(j) > eps)
+        return false;
+  }
+  return true;
+}
+
+Matrix LeftDiv(Matrix m1, Matrix m2) {
+  int s1 = m1.m.size();
+  if (s1 != m1.m.at(0).size())
+    throw std::domain_error("Divisor matrix is not square");
+  if (s1 != m2.m.size())
+    throw std::domain_error("Incompatible formats");
+  if (fabs(m1.Det()) <= m1.GetEpsilon())
+    throw std::domain_error("Divisor matrix is singular");
+  int s2 = m2.m.at(0).size();
+  for (int k = 0; k < s1; k++) {
+    int p = k;
+    for (int i = k + 1; i < s1; i++) {
+      if (fabs(m1.m.at(i).at(k)) > fabs(m1.m.at(p).at(k)))
+        p = i;
+    }
+    if (p != k) {
+      std::swap(m1.m.at(k), m1.m.at(p));
+      std::swap(m2.m.at(k), m2.m.at(p));
+    }
+    for (int i = k + 1; i < s1; i++) {
+      double mi = m1.m.at(i).at(k) / m1.m.at(k).at(k);
+      for (int j = k + 1; j < s1; j++) {
+        m1.m.at(i).at(j) -= mi * m1.m.at(k).at(j);
+      }
+      for (int j = 0; j < s2; j++) {
+        m2.m.at(i).at(j) -= mi * m2.m.at(k).at(j);
+      }
+    }
+  }
+  Matrix x(s1, s2);
+  for (int k = 0; k < s2; k++) {
+    for (int i = s1 - 1; i >= 0; i--) {
+      double s = m2.m.at(i).at(k);
+      for (int j = i + 1; j < s1; j++) {
+        s -= m1.m.at(i).at(j) * x.m.at(j).at(k);
+      }
+      x.m.at(i).at(k) = s / m1.m.at(i).at(i);
+    }
+  }
+  return x;
+}
+
+Vector LeftDiv(Matrix m, Vector v) {
+  m = LeftDiv(m, Matrix(v));
+  for (int i = 0; i < m.m.at(0).size(); i++) {
+    v[i] = m.m.at(i).at(0);
+  }
+  return v;
+}
+
+Matrix operator/(const Matrix &m, double s) {
+  Matrix m1(m);
+  m1 /= s;
+  return m1;
+}
+
+Matrix &Matrix::operator/=(double s) {
+  if (fabs(s) <= GetEpsilon() * fabs(s))
+    throw std::domain_error("Division by zero");
+  int r = NRows(), c = NCols();
+  for (int i = 0; i < r; i++) {
+    for (int j = 0; j < c; j++) {
+      m.at(i).at(j) /= s;
+    }
+  }
+  return *this;
+}
+
+Matrix operator/(Matrix m1, Matrix m2) {
+  m1 /= m2;
+  return m1;
+}
+
+Matrix &Matrix::operator/=(Matrix m) {
+  int s1 = m.m.size();
+  if (s1 != m.m.at(0).size())
+    throw std::domain_error("Divisor matrix is not square");
+  if (fabs(m.Det()) <= m.GetEpsilon())
+    throw std::domain_error("Divisor matrix is singular");
+  if (m.m.at(0).size() != this->m.at(0).size())
+    throw std::domain_error("Incompatible formats");
+  int s2 = this->m.size();
+  for (int k = 0; k < s1; k++) {
+    int p = k;
+    for (int i = k + 1; i < s1; i++) {
+      if (fabs(m.m.at(k).at(i)) > fabs(m.m.at(k).at(p)))
+        p = i;
+    }
+    if (p != k) {
+      for (int i = 0; i < s2; i++) {
+        if (i < s1)
+          std::swap(m.m.at(i).at(k), m.m.at(i).at(p));
+        std::swap(this->m.at(i).at(k), this->m.at(i).at(p));
+      }
+    }
+    for (int i = k + 1; i < s1; i++) {
+      double mi = m.m.at(k).at(i) / m.m.at(k).at(k);
+      for (int j = k + 1; j < s1; j++) {
+        m.m.at(j).at(i) = m.m.at(j).at(i) - mi * m.m.at(j).at(k);
+      }
+      for (int j = 0; j < s2; j++) {
+        this->m.at(j).at(i) = this->m.at(j).at(i) - mi * this->m.at(j).at(k);
+      }
+    }
+  }
+  Matrix x(s2, s1);
+  for (int k = 0; k < s2; k++) {
+    for (int i = s1 - 1; i >= 0; i--) {
+      double s = this->m.at(k).at(i);
+      for (int j = i + 1; j < s1; j++) {
+        s = s - m.m.at(j).at(i) * x.m.at(k).at(j);
+      }
+      x.m.at(k).at(i) = s / m.m.at(i).at(i);
+    }
+  }
+  std::swap(*this, x);
+  return *this;
+}
+
+double Matrix::Det() const {
+  Matrix a(*this);
+  int s = m.size();
+  if (s != m.at(0).size())
+    throw std::domain_error("Matrix is not square");
+  double d = 1;
+  const double eps = GetEpsilon();
+  for (int k = 0; k < s; k++) {
+    int p = k;
+    for (int i = k + 1; i < s; i++) {
+      if (fabs(a.m.at(i).at(k)) > fabs(a.m.at(p).at(k)))
+        p = i;
+    }
+    if (fabs(a.m.at(p).at(k)) < eps)
+      return 0;
+    if (p != k) {
+      std::swap(a.m.at(k), a.m.at(p));
+      d = -d;
+    }
+    d *= a.m.at(k).at(k);
+    for (int i = k + 1; i < s; i++) {
+      double mi = a.m.at(i).at(k) / a.m.at(k).at(k);
+      for (int j = k + 1; j < s; j++) {
+        a.m.at(i).at(j) -= mi * a.m.at(k).at(j);
+      }
+    }
+  }
+  return d;
+}
+
+double Det(Matrix m) { return m.Det(); }
+
+void Matrix::Invert() {
+  int s = m.size();
+  if (s != m.at(0).size())
+    throw std::domain_error("Matrix is not square");
+  if (fabs(Det()) <= GetEpsilon())
+    throw std::domain_error("Matrix is singular");
+  std::vector<int> v(s);
+  for (int k = 0; k < s; k++) {
+    int p = k;
+    for (int i = k + 1; i < s; i++) {
+      if (fabs(m.at(i).at(k)) > fabs(m.at(p).at(k)))
+        p = i;
+    }
+    if (p != k) {
+      std::swap(m.at(k), m.at(p));
+    }
+    v.at(k) = p;
+    double mi = m.at(k).at(k);
+    m.at(k).at(k) = 1;
+    for (int j = 0; j < s; j++) {
+      m.at(k).at(j) /= mi;
+    }
+    for (int i = 0; i < s; i++) {
+      if (i != k)
+        mi = m.at(i).at(k);
+      m.at(i).at(k) = 0;
+      for (int j = 0; j < s; j++) {
+        m.at(i).at(j) -= mi * m.at(k).at(j);
+      }
+    }
+  }
+  for (int j = s - 1; j >= 0; j--) {
+    int p = v.at(j);
+    if (p != j) {
+      for (int i = 0; i < s; i++) {
+        std::swap(m.at(i).at(p), m.at(i).at(j));
+      }
+    }
+  }
+}
+
+Matrix Inverse(Matrix m) {
+  m.Invert();
+  return m;
+}
+
+void Matrix::ReduceToRREF() {
+  int k = -1, l = -1, m1 = m.size(), n = m.at(0).size();
+  std::vector<bool> w;
+  for (int j = 0; j < n; j++) {
+    w.push_back(false);
+  }
+  while (k < m1 && l < n) {
+    l++;
+    k++;
+    double v = 0;
+    int p{};
+    double eps = GetEpsilon();
+    while (v < eps && l < n) {
+      p = k;
+      for (int i = k; i < m1; i++) {
+        if (fabs(m.at(i).at(l)) > v) {
+          v = fabs(m.at(i).at(l));
+          p = i;
+        }
+      }
+      if (v < eps) {
+        l++;
+      }
+    }
+    if (l < n) {
+      w.at(l) = true;
+      if (p != k) {
+        std::swap(m.at(k), m.at(p));
+      }
+      double mi = m.at(k).at(l);
+      for (int j = l; j < n; j++) {
+        m.at(k).at(j) /= mi;
+      }
+      for (int i = 0; i < m1; i++) {
+        if (i != k) {
+          mi = m.at(i).at(l);
+          for (int j = l; j < n; j++) {
+            m.at(i).at(j) -= mi * m.at(k).at(j);
+          }
+        }
+      }
+    }
+  }
+}
+
+Matrix RREF(Matrix m) {
+  m.ReduceToRREF();
+  return m;
+}
+
+int Matrix::Rank() const {
+  Matrix mat(*this);
+  int k = -1, l = -1, m1 = m.size(), n = m.at(0).size();
+  std::vector<bool> w;
+  for (int j = 0; j < n; j++) {
+    w.push_back(false);
+  }
+  while (k < m1 && l < n) {
+    l++;
+    k++;
+    double v = 0;
+    int p{};
+    double eps = GetEpsilon();
+    while (v < eps && l < n) {
+      p = k;
+      for (int i = k; i < m1; i++) {
+        if (fabs(mat.m.at(i).at(l)) > v) {
+          v = fabs(mat.m.at(i).at(l));
+          p = i;
+        }
+      }
+      if (v < eps) {
+        l++;
+      }
+    }
+    if (l < n) {
+      w.at(l) = true;
+      if (p != k) {
+        std::swap(mat.m.at(k), mat.m.at(p));
+      }
+      double mi = mat.m.at(k).at(l);
+      for (int j = l; j < n; j++) {
+        mat.m.at(k).at(j) /= mi;
+      }
+      for (int i = 0; i < m1; i++) {
+        if (i != k) {
+          mi = mat.m.at(i).at(l);
+          for (int j = l; j < n; j++) {
+            mat.m.at(i).at(j) -= mi * mat.m.at(k).at(j);
+          }
+        }
+      }
+    }
+  }
+  return k;
+}
+
+int Rank(Matrix m) { return m.Rank(); }
+
+class LUDecomposer {
+  Matrix a;
+  std::vector<int> w;
+
+public:
+  LUDecomposer(Matrix m);
+  void Solve(const Vector &b, Vector &x) const;
+  Vector Solve(Vector b) const;
+  void Solve(const Matrix &b, Matrix &x) const;
+  Matrix Solve(Matrix b) const;
+  Matrix GetCompactLU() const;
+  Matrix GetL() const;
+  Matrix GetU() const;
+  Vector GetPermuation() const;
+};
+
+LUDecomposer::LUDecomposer(Matrix m) : a(m) {
+  int n = m.NCols();
+  if (m.NRows() != n)
+    throw std::domain_error("Matrix is not square");
+  if (fabs(m.Det()) <= m.GetEpsilon())
+    throw std::domain_error("Matrix is singular");
+  w.resize(n);
+  for (int j = 1; j <= n; j++) {
+    for (int i = 1; i <= j; i++) {
+      double s = a[i - 1][j - 1];
+      for (int k = 1; k < i; k++) {
+        s -= a[i - 1][k - 1] * a[k - 1][j - 1];
+      }
+      a[i - 1][j - 1] = s;
+    }
+    int p = j;
+    for (int i = j + 1; i <= n; i++) {
+      double s = a[i - 1][j - 1];
+      for (int k = 1; k < j; k++) {
+        s -= a[i - 1][k - 1] * a[k - 1][j - 1];
+      }
+      a[i - 1][j - 1] = s;
+      if (fabs(s) > fabs(a[p - 1][j - 1]))
+        p = i;
+    }
+    if (p != j) {
+      std::swap(*a[j - 1], *a[p - 1]);
+    }
+    w.at(j - 1) = p;
+    double mi = a[j - 1][j - 1];
+    for (int i = j + 1; i <= n; i++) {
+      a[i - 1][j - 1] /= mi;
+    }
+  }
+}
+
+void LUDecomposer::Solve(const Vector &b, Vector &x) const {
+  int n = a.NCols();
+  if (b.NElems() != n || x.NElems() != n)
+    throw std::domain_error("Incompatible formats");
+  std::vector<int> w1 = this->w;
+  Vector b1(b);
+  std::vector<double> y(n);
+  for (int i = 1; i <= n; i++) {
+    int p = w.at(i - 1);
+    double s = b1[p - 1];
+    b1[p - 1] = b1[i - 1];
+    for (int j = 1; j < i; j++) {
+      if (i > j)
+        s -= a[i - 1][j - 1] * y.at(j - 1);
+      else if (i == j)
+        s -= y.at(j - 1);
+    }
+    y.at(i - 1) = s;
+  }
+  for (int i = n; i > 0; i--) {
+    double s = y.at(i - 1);
+    for (int j = i + 1; j <= n; j++) {
+      if (i <= j)
+        s -= a[i - 1][j - 1] * x[j - 1];
+    }
+    x[i - 1] = s / a[i - 1][i - 1];
+  }
+}
+
+Vector LUDecomposer::Solve(Vector b) const {
+  Vector x(b.NElems());
+  Solve(b, x);
+  return x;
+}
+
+void LUDecomposer::Solve(const Matrix &b, Matrix &x) const {
+  int n = a.NCols(), m = a.NRows();
+  if (b.NRows() != m || b.NCols() != x.NCols() || x.NRows() != n)
+    throw std::domain_error("Incompatible formats");
+  x = LeftDiv(a, b);
+}
+
+Matrix LUDecomposer::Solve(Matrix b) const {
+  int m = a.NRows();
+  if (b.NRows() != m)
+    throw std::domain_error("Incompatible formats");
+  return LeftDiv(a, b);
+}
+
+Matrix LUDecomposer::GetCompactLU() const { return a; }
+
+Matrix LUDecomposer::GetL() const {
+  Matrix a1(a);
+  int n = a.NCols();
+  for (int i = 1; i <= n; i++) {
+    for (int j = i; j <= n; j++) {
+      if (i == j)
+        a1[i - 1][j - 1] = 1;
+      else
+        a1[i - 1][j - 1] = 0;
+    }
+  }
+  return a1;
+}
+
+Matrix LUDecomposer::GetU() const {
+  Matrix a1(a);
+  int n = a.NCols();
+  for (int i = 1; i <= n; i++) {
+    for (int j = 1; j < i; j++) {
+      a1[i - 1][j - 1] = 0;
+    }
+  }
+  return a1;
+}
+
+Vector LUDecomposer::GetPermuation() const {
+  Vector w1(w.size());
+  for (int i = 0; i < w.size(); i++) {
+    w1[i] = w.at(i);
+  }
+  return w1;
+}
+
+class QRDecomposer {
+  Matrix qr;
+  std::vector<double> d;
+
+public:
+  QRDecomposer(Matrix m);
+  void Solve(const Vector &b, Vector &x) const;
+  Vector Solve(Vector b) const;
+  void Solve(const Matrix &b, Matrix &x) const;
+  Matrix Solve(Matrix b) const;
+  Vector MulQWith(Vector v) const;
+  Matrix MulQWith(Matrix m) const;
+  Vector MulQTWith(Vector v) const;
+  Matrix MulQTWith(Matrix m) const;
+  Matrix GetQ() const;
+  Matrix GetR() const;
+};
+
+QRDecomposer::QRDecomposer(Matrix m) : qr(m) {
+  int mm = m.NRows(), n = m.NCols();
+  if (mm < n)
+    throw std::domain_error("Invalid matrix format");
+  double eps = m.GetEpsilon();
+  d.resize(n);
+  for (int k = 0; k < n; k++) {
+    double s = 0;
+    for (int i = k; i < mm; i++) {
+      s += qr[i][k] * qr[i][k];
+    }
+    s = sqrt(s);
+    double mi = sqrt(s * (s + fabs(qr[k][k])));
+    if (fabs(mi) <= eps * (fabs(mi)))
+      throw std::domain_error("Matrix is singular");
+    if (qr[k][k] < 0)
+      s = -s;
+    qr[k][k] = (qr[k][k] + s) / mi;
+    for (int i = k + 1; i < mm; i++) {
+      qr[i][k] = qr[i][k] / mi;
+    }
+    d.at(k) = -s;
+    for (int j = k + 1; j < n; j++) {
+      s = 0;
+      for (int i = k; i < mm; i++) {
+        s += qr[i][k] * qr[i][j];
+      }
+      for (int i = k; i < mm; i++) {
+        qr[i][j] -= s * qr[i][k];
+      }
+    }
+  }
+}
+
+void QRDecomposer::Solve(const Vector &b, Vector &x) const {
+  int n = qr.NRows();
+  if (n != qr.NCols())
+    throw std::domain_error("Matrix is not square");
+  if (b.NElems() != n || x.NElems() != n)
+    throw std::domain_error("Incompatible formats");
+  Matrix qtb(Transpose(GetQ()) * b);
+  for (int i = n - 1; i >= 0; i--) {
+    double s = b[i];
+    for (int j = i + 1; j < n; j++) {
+      if (i < j)
+        s -= qr[i][j] * x[j];
+      if (i == j)
+        s -= d.at(i) * x[j];
+    }
+    x[i] = s / d.at(i);
+  }
+}
+
+Vector QRDecomposer::Solve(Vector b) const {
+  Vector x(b.NElems());
+  Solve(b, x);
+  return x;
+}
+
+void QRDecomposer::Solve(const Matrix &b, Matrix &x) const {
+  if (qr.NRows() != qr.NCols())
+    throw std::domain_error("Matrix is not square");
+  Matrix a = GetQ() * GetR();
+  int n = a.NCols();
+  if (b.NRows() != n || b.NCols() != x.NCols() || x.NRows() != n)
+    throw std::domain_error("Incompatible formats");
+  x = LeftDiv(a, b);
+}
+
+Matrix QRDecomposer::Solve(Matrix b) const {
+  if (qr.NRows() != qr.NCols())
+    throw std::domain_error("Matrix is not square");
+  Matrix a = GetQ() * GetR();
+  int n = a.NCols();
+  if (b.NRows() != n)
+    throw std::domain_error("Incompatible formats");
+  return LeftDiv(a, b);
+}
+
+Vector QRDecomposer::MulQWith(Vector v) const {
+  int m = qr.NRows(), n = qr.NCols();
+  if (m != v.NElems())
+    throw std::domain_error("Incompatible formats");
+  for (int k = n - 1; k >= 0; k--) {
+    double s = 0;
+    for (int i = k; i < m; i++) {
+      s += qr[i][k] * v[i];
+    }
+    for (int i = k; i < m; i++) {
+      v[i] -= s * qr[i][k];
+    }
+  }
+  return v;
+}
+
+Matrix QRDecomposer::MulQWith(Matrix m) const {
+  int mm = qr.NRows(), n = qr.NCols();
+  if (mm != m.NRows())
+    throw std::domain_error("Incompatible formats");
+  Matrix q(mm, mm);
+  for (int j = 0; j < mm; j++) {
+    for (int i = 0; i < mm; i++) {
+      q[i][j] = 0;
+    }
+    q[j][j] = 1;
+    for (int k = n - 1; k >= 0; k--) {
+      double s = 0;
+      for (int i = k; i < mm; i++) {
+        s += qr[i][k] * q[i][j];
+      }
+      for (int i = k; i < mm; i++) {
+        q[i][j] -= s * qr[i][k];
+      }
+    }
+  }
+  return q * m;
+}
+
+Vector QRDecomposer::MulQTWith(Vector v) const {
+  int n = qr.NRows();
+  if (n != v.NElems())
+    throw std::domain_error("Incompatible formats");
+  for (int k = 0; k < n; k++) {
+    double s = 0;
+    for (int i = k; i < n; i++) {
+      s += qr[i][k] * v[i];
+    }
+    for (int i = k; i < n; i++) {
+      v[i] -= s * qr[i][k];
+    }
+  }
+  return v;
+}
+
+Matrix QRDecomposer::MulQTWith(Matrix m) const {
+  int mm = qr.NRows(), n = qr.NCols();
+  if (mm != m.NRows())
+    throw std::domain_error("Incompatible formats");
+  Matrix q(mm, mm);
+  for (int j = 0; j < mm; j++) {
+    for (int i = 0; i < mm; i++) {
+      q[i][j] = 0;
+    }
+    q[j][j] = 1;
+    for (int k = 0; k < n; k++) {
+      double s = 0;
+      for (int i = k; i < mm; i++) {
+        s += qr[i][k] * q[i][j];
+      }
+      for (int i = k; i < mm; i++) {
+        q[i][j] -= s * qr[i][k];
+      }
+    }
+  }
+  return q * m;
+}
+
+Matrix QRDecomposer::GetQ() const {
+  int m = qr.NRows(), n = qr.NCols();
+  Matrix q(m, m), e(m, m), v(m, 1), vt(1, m);
+  for (int i = 0; i < m; i++) {
+    for (int j = 0; j < m; j++) {
+      if (i == j)
+        e[i][j] = 1;
+    }
+  }
+  for (int k = 0; k < n; k++) {
+    for (int j = 0; j < m; j++) {
+      if (j >= k)
+        v[j][0] = vt[0][j] = qr[j][k] / sqrt(2);
+      else
+        v[j][0] = vt[0][j] = 0;
+    }
+    if (!k)
+      q = e - 2 * (v * vt);
+    else
+      q *= e - 2 * (v * vt);
+  }
+  return q;
+}
+
+Matrix QRDecomposer::GetR() const {
+  int n = qr.NCols();
+  Matrix r(n, n);
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      if (i < j)
+        r[i][j] = qr[i][j];
+      if (i == j)
+        r[i][j] = d.at(i);
+    }
+  }
+  return r;
+}
+
+// Tests
+void test_Vector_Chop() {
+  std::cout << "Vector Chop test:" << std::endl;
+  Vector v({1e-10, 1e-15, 1e-12, 1e-13, 5});
+  std::cout << "    Expected output:\n";
+  std::cout << 1e-10 << "\n"
+            << 0 << "\n"
+            << 0 << "\n"
+            << 0 << "\n"
+            << 5 << "\n";
+  std::cout << "    Actual output:\n";
+  v.Chop(1e-10);
+  v.Print();
+}
+
+void test_Vector_EqualTo() {
+  std::cout << "Vector EqualTo test:" << std::endl;
+  Vector v1({1e-9, 1e-10, 1e-11, 1e-12}), v2({1e-10, 1e-10, 1e-10, 1e-12});
+  std::cout << "    Expected output: true\n";
+  std::cout << "    Actual output: " << std::boolalpha << v1.EqualTo(v2, 1e-9);
+  std::cout << std::endl;
+}
+
+void test_Matrix_Chop() {
+  std::cout << "Matrix Chop test:" << std::endl;
+  Matrix m({{1e-10, 1e-15, 0}, {1e-12, 1e-13, 6}});
+  std::cout << "    Expected output:\n     1e-10         0         0\n         "
+               "0         0         6\n";
+  std::cout << "    Actual output:\n";
+  m.Chop(1e-10);
+  m.Print();
+}
+
+void test_Matrix_EqualTo() {
+  std::cout << "Matrix EqualTo test:" << std::endl;
+  Matrix m({{2, 4}, {7, 8}}), m1({{2.1, 4.1}, {7.2, 8.3}});
+  std::cout << "    Expected output: true\n";
+  std::cout << "    Actual output: " << m.EqualTo(m1, 0.3);
+  std::cout << std::endl;
+}
+
+void test_Matrix_LeftDiv_Matrix() {
+  std::cout << "Matrix LeftDiv(Matrix) test:" << std::endl;
+  Matrix m({{2, 4}, {7, 8}}), m1({{2.1, 4.1}, {7.2, 8.3}});
+  Matrix m2 = LeftDiv(m, m1);
+  std::cout
+      << "    Expected output:\n         1 0.0333333\n     0.025   1.00833\n";
+  std::cout << "    Actual output:\n";
+  m2.Print();
+}
+
+void test_Matrix_LeftDiv_Matrix_exception_1() {
+  std::cout << "Matrix LeftDiv(Matrix) exception test:" << std::endl;
+  std::cout << "    Expected output:\nDivisor matrix is not square\n";
+  try {
+    Matrix m({{2, 4, 6}, {7, 8, 6}}), m1({{2.1, 4.1}, {7.2, 8.3}});
+    Matrix m2 = LeftDiv(m, m1);
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+}
+
+void test_Matrix_LeftDiv_Matrix_exception_2() {
+  std::cout << "Matrix LeftDiv(Matrix) exception test:" << std::endl;
+  std::cout << "    Expected output:\nIncompatible formats\n";
+  try {
+    Matrix m({{2, 4}, {7, 8}}), m1({{2}, {7}, {3}});
+    Matrix m2 = LeftDiv(m, m1);
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+}
+
+void test_Matrix_LeftDiv_Matrix_exception_3() {
+  std::cout << "Matrix LeftDiv(Matrix) exception test:" << std::endl;
+  std::cout << "    Expected output:\nDivisor matrix is singular\n";
+  try {
+    Matrix m({{2, 3, 4}, {4, 6, 8}, {1, 1, 1}}), m1({{2, 3}, {7, 8}, {1, 2}});
+    Matrix m2 = LeftDiv(m, m1);
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+}
+
+void test_Matrix_LeftDiv_Vector() {
+  std::cout << "Matrix LeftDiv(Vector) test:" << std::endl;
+  Matrix m({{7.8, 12.4}, {18.5, 23.2}});
+  Vector v({2.2, 3.3});
+  Vector v1 = LeftDiv(m, v);
+  std::cout << "    Expected output:\n-0.208918\n3.3\n";
+  std::cout << "    Actual output:\n";
+  v1.Print();
+}
+
+void test_Matrix_operator_slash_scalar() {
+  std::cout << "Matrix operator /(scalar) test:" << std::endl;
+  Matrix m({{2, 4}, {6, 8}});
+  Matrix m1 = m / 4;
+  std::cout
+      << "    Expected output:\n       0.5         1\n       1.5         2\n";
+  std::cout << "    Actual output:\n";
+  m1.Print();
+}
+
+void test_Matrix_operator_slash_equal_scalar() {
+  std::cout << "Matrix operator /=(scalar) test:" << std::endl;
+  Matrix m({{2, 4}, {6, 8}});
+  m /= 4;
+  std::cout
+      << "    Expected output:\n       0.5         1\n       1.5         2\n";
+  std::cout << "    Actual output:\n";
+  m.Print();
+}
+
+void test_Matrix_operator_slash_equal_scalar_exception() {
+  std::cout << "Matrix operator /=(scalar) exception test:" << std::endl;
+  std::cout << "    Expected output:\nDivision by zero\n";
+  try {
+    Matrix m({{2, 3}, {7, 8}, {1, 2}});
+    m /= 0;
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+}
+
+void test_Matrix_operator_slash_Matrix() {
+  std::cout << "Matrix operator /(Matrix) test:" << std::endl;
+  Matrix m1({{2, 4}, {6, 8}}), m2({{1, 2}, {3, 4}});
+  Matrix m = m1 / m2;
+  std::cout
+      << "    Expected output:\n         2         0\n         0         2\n";
+  std::cout << "    Actual output:\n";
+  m.Print();
+}
+
+void test_Matrix_operator_slash_equal_Matrix() {
+  std::cout << "Matrix operator /=(Matrix) test:" << std::endl;
+  Matrix m1({{2, 4}, {6, 8}}), m2({{1, 2}, {3, 4}});
+  m1 /= m2;
+  std::cout
+      << "    Expected output:\n         2         0\n         0         2\n";
+  std::cout << "    Actual output:\n";
+  m1.Print();
+}
+
+void test_Matrix_operator_slash_equal_Matrix_exception_1() {
+  std::cout << "Matrix operator /=(Matrix) exception test:" << std::endl;
+  std::cout << "    Expected output:\nDivisor matrix is not square\n";
+  try {
+    Matrix m({{2, 3}, {7, 8}}), m1({{1, 2}, {2, 3}, {1, 3}});
+    m /= m1;
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+  std::cout << std::endl;
+}
+
+void test_Matrix_operator_slash_equal_Matrix_exception_2() {
+  std::cout << "Matrix operator /=(Matrix) exception test:" << std::endl;
+  std::cout << "    Expected output:\nIncompatible formats\n";
+  try {
+    Matrix m({{2, 3, 1}, {7, 8, 1}, {3, 3, 1}}), m1({{1, 2}, {2, 3}});
+    m /= m1;
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+}
+
+void test_Matrix_operator_slash_equal_Matrix_exception_3() {
+  std::cout << "Matrix operator /=(Matrix) exception test:" << std::endl;
+  std::cout << "    Expected output:\nDivisor matrix is singular\n";
+  try {
+    Matrix m({{2, 5}, {2, 3}}), m1({{1, 2}, {1, 2}});
+    m /= m1;
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+}
+
+void test_Matrix_Det() {
+  std::cout << "Matrix Det test:" << std::endl;
+  Matrix m({{2, 4, 5}, {6, 8, 13}, {11, 23, 5}});
+  std::cout << "    Expected output: 184\n";
+  std::cout << "    Actual output: " << m.Det() << "\n";
+}
+
+void test_Matrix_Det_exception() {
+  std::cout << "Matrix Det exception test:" << std::endl;
+  std::cout << "    Expected output:\nMatrix is not square\n";
+  try {
+    Matrix m({{2, 5, 3, 3}, {2, 3, 4, 9}});
+    m.Det();
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+}
+
+void test_Matrix_friend_Det() {
+  std::cout << "Matrix Det test:" << std::endl;
+  Matrix m({{2, 4, 5}, {6, 8, 13}, {11, 23, 5}});
+  std::cout << "    Expected output: 184\n";
+  std::cout << "    Actual output: " << m.Det() << "\n";
+}
+
+void test_Matrix_Invert() {
+  std::cout << "Matrix Invert test:" << std::endl;
+  Matrix m({{2, 4.1, 2.13}, {5.4, 8.22, 3.14}, {1.2, 4.52, 3.33}});
+  m.Invert();
+  std::cout << "    Expected output:\n  0.382827         00.00641636\n         "
+               "0         0 0.0947858\n         0         0         0\n";
+  std::cout << "    Actual output:\n";
+  m.Print();
+}
+
+void test_Matrix_Invert_exception_1() {
+  std::cout << "Matrix Invert exception test:" << std::endl;
+  std::cout << "    Expected output:\nMatrix is not square\n";
+  try {
+    Matrix m({{2, 5, 3, 3}, {2, 3, 4, 9}});
+    m.Invert();
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+}
+
+void test_Matrix_Invert_exception_2() {
+  std::cout << "Matrix Invert exception test:" << std::endl;
+  std::cout << "    Expected output:\nMatrix is singular\n";
+  try {
+    Matrix m({{2, 3, 3}, {4, 6, 6}, {1, 2, 3}});
+    m.Invert();
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+}
+
+void test_Matrix_Inverse() {
+  std::cout << "Matrix Inverse test:" << std::endl;
+  Matrix m({{2, 4.1, 2.13}, {5.4, 8.22, 3.14}, {1.2, 4.52, 3.33}});
+  Matrix m1 = Inverse(m);
+  std::cout << "    Expected output:\n  0.382827         00.00641636\n         "
+               "0         0 0.0947858\n         0         0         0\n";
+  std::cout << "    Actual output:\n";
+  m1.Print();
+}
+
+void test_Matrix_ReduceToRREF() {
+  std::cout << "Matrix ReduceToRREF test:" << std::endl;
+  Matrix m({{2, 4, 2}, {4, 22, 34}, {2, 52, 33}});
+  m.ReduceToRREF();
+  std::cout << "    Expected output:\n         1         0         0\n         "
+               "0         1         0\n         0         0         1\n";
+  std::cout << "    Actual output:\n";
+  m.Print();
+}
+
+void test_Matrix_RREF() {
+  std::cout << "Matrix RREF test:" << std::endl;
+  Matrix m({{2, 4, 2}, {4, 22, 34}, {2, 52, 33}});
+  Matrix m1 = RREF(m);
+  std::cout << "    Expected output:\n         1         0         0\n         "
+               "0         1         0\n         0         0         1\n";
+  std::cout << "    Actual output:\n";
+  m1.Print();
+}
+
+void test_Matrix_Rank() {
+  std::cout << "Matrix Rank test:" << std::endl;
+  Matrix m({{2, 4, 2}, {4, 22, 34}, {2, 52, 33}});
+  std::cout << "    Expected output: 3\n";
+  std::cout << "    Actual output: " << m.Rank() << "\n";
+  std::cout << std::endl;
+}
+
+void test_Matrix_friend_Rank() {
+  std::cout << "Matrix friend Rank test:" << std::endl;
+  Matrix m({{2, 4, 2}, {4, 22, 34}, {2, 52, 33}});
+  std::cout << "    Expected output: 3\n";
+  std::cout << "    Actual output: " << Rank(m) << "\n";
+  std::cout << std::endl;
+}
+
+void test_LUDecomposer_ctor_exception_1() {
+  std::cout << "LUDecomposer exception test:" << std::endl;
+  std::cout << "    Expected output:\nMatrix is not square\n";
+  try {
+    Matrix m({{2, 3}, {4, 6}, {1, 3}});
+    LUDecomposer lu(m);
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+}
+
+void test_LUDecomposer_ctor_exception_2() {
+  std::cout << "LUDecomposer exception test:" << std::endl;
+  std::cout << "    Expected output:\nMatrix is singular\n";
+  try {
+    Matrix m({{2, 3}, {4, 6}});
+    LUDecomposer lu(m);
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+}
+
+void test_LUDecomposer_Solve_void_Vector() {
+  std::cout << "LUDecomposer Solve(Vector) test:" << std::endl;
+  Matrix m({{11, 4, 7}, {15, 13, 3}, {2, 5, 3}});
+  LUDecomposer lu(m);
+  Vector x({1, 2, 3});
+  Vector rez(x);
+  lu.Solve(m * x, rez);
+  std::cout << "    Expected output: 1\n";
+  std::cout << "    Actual output: " << x.EqualTo(LeftDiv(m, rez)) << "\n";
+}
+
+void test_LUDecomposer_Solve_void_exception_1() {
+  std::cout << "LUDecomposer exception test:" << std::endl;
+  std::cout << "    Expected output:\nMatrix is singular\n";
+  try {
+    Matrix m({{2, 3}, {4, 6}});
+    LUDecomposer lu(m);
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+}
+
+void test_LUDecomposer_Solve_Vector() {
+  std::cout << "LUDecomposer Solve(Vector) test:" << std::endl;
+  Matrix m({{2, 4, 2}, {4, 2, 3}, {2, 5, 3}});
+  LUDecomposer lu(m);
+  Vector x({1, 2, 3});
+  Vector v = lu.Solve(m * x);
+  std::cout << "    Expected output: 1\n";
+  std::cout << "    Actual output: " << x.EqualTo(LeftDiv(m, v)) << "\n";
+}
+
+void test_LUDecomposer_Solve_void_Matrix() {
+  std::cout << "LUDecomposer Solve(Matrix) test:" << std::endl;
+  Matrix m({{7, 4, 11}, {17, 2, 3}, {2, 5, 6}}), x({{1, 2}, {2, 3}, {5, 6}});
+  LUDecomposer lu(m);
+  Matrix m1(x);
+  lu.Solve(m * x, m1);
+  std::cout << "    Expected output: 1\n";
+  std::cout << "    Actual output: " << x.EqualTo(LeftDiv(m, m1)) << "\n";
+}
+
+void test_LUDecomposer_Solve_Matrix() {
+  std::cout << "LUDecomposer Solve(Matrix) test:" << std::endl;
+  Matrix m({{11, 7, 2}, {13, 14, 3}, {2, 5, 19}}),
+      x({{11, 2}, {7, 3}, {5, 11}});
+  LUDecomposer lu(m);
+  Matrix m1 = lu.Solve(m * x);
+  std::cout << "    Expected output: 1\n";
+  std::cout << "    Actual output: " << x.EqualTo(LeftDiv(m, m1)) << "\n";
+}
+
+void test_LUDecomposer_GetCompactLU() {
+  std::cout << "LUDecomposer GetCompactLU test:" << std::endl;
+  Matrix m({{8, 11, 12}, {6, 7, 7}, {2, 5, 3}});
+  LUDecomposer lu(m);
+  std::cout << "    Expected output: 1\n";
+  std::cout << "    Actual output: "
+            << lu.GetCompactLU().EqualTo(
+                   lu.GetL() + lu.GetU() -
+                   Matrix({{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}))
+            << "\n";
+}
+
+void test_LUDecomposer_GetL() {
+  std::cout << "LUDecomposer GetL test:" << std::endl;
+  Matrix m({{8, 11, 12}, {6, 7, 7}, {2, 5, 3}});
+  LUDecomposer lu(m);
+  std::cout << "    Expected output: 1\n";
+  std::cout << "    Actual output: "
+            << lu.GetL().EqualTo(lu.GetCompactLU() - lu.GetU() +
+                                 Matrix({{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}))
+            << "\n";
+}
+
+void test_LUDecomposer_GetU() {
+  std::cout << "LUDecomposer GetU test:" << std::endl;
+  Matrix m({{8, 11, 12}, {6, 7, 7}, {2, 5, 3}});
+  LUDecomposer lu(m);
+  std::cout << "    Expected output:\n";
+  std::cout << "    Expected output: 1\n";
+  std::cout << "    Actual output: "
+            << lu.GetU().EqualTo(lu.GetCompactLU() - lu.GetL()) << "\n";
+}
+
+void test_LUDecomposer_GetPermuation() {
+  std::cout << "LUDecomposer GetPermuation test:" << std::endl;
+  Matrix m({{2, 4, 2}, {4, 2, 3}, {2, 5, 3}});
+  LUDecomposer lu(m);
+  std::cout << "    Expected output: \n";
+  std::cout << "    Actual output: " << lu.GetPermuation().NElems() << "\n\n";
+}
+
+void test_QRDecomposer_ctor_exception_1() {
+  std::cout << "QRDecomposer exception test:" << std::endl;
+  std::cout << "    Expected output:\nMatrix is not square\n";
+  try {
+    Matrix m({{2, 3}, {4, 6}, {1, 3}});
+    QRDecomposer qr(m);
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+}
+
+void test_QRDecomposer_ctor_exception_2() {
+  std::cout << "QRDecomposer exception test:" << std::endl;
+  std::cout << "    Expected output:\nMatrix is singular\n";
+  try {
+    Matrix m({{2, 3}, {4, 6}});
+    QRDecomposer qr(m);
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+}
+
+void test_QRDecomposer_Solve_void_Vector() {
+  std::cout << "QRDecomposer Solve(Vector) test:" << std::endl;
+  Matrix m({{2, 4, 2}, {4, 2, 3}, {2, 5, 3}});
+  QRDecomposer qr(m);
+  Vector x({1, 2, 3});
+  Vector rez(x);
+  qr.Solve(m * x, rez);
+  std::cout << "    Expected output: 1\n";
+  std::cout << "    Actual output: " << x.EqualTo(LeftDiv(m, rez)) << "\n";
+}
+
+void test_QRDecomposer_Solve_void_exception_1() {
+  std::cout << "QRDecomposer exception test:" << std::endl;
+  std::cout << "    Expected output:\nMatrix is singular\n";
+  try {
+    Matrix m({{2, 3}, {4, 6}});
+    QRDecomposer qr(m);
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+}
+
+void test_QRDecomposer_Solve_Vector() {
+  std::cout << "QRDecomposer Solve(Vector) test:" << std::endl;
+  Matrix m({{2, 4, 2}, {4, 2, 3}, {2, 5, 3}});
+  QRDecomposer qr(m);
+  Vector x({1, 2, 3});
+  Vector v = qr.Solve(m * x);
+  std::cout << "    Expected output: 1\n";
+  std::cout << "    Actual output: " << x.EqualTo(LeftDiv(m, v)) << "\n";
+}
+
+void test_QRDecomposer_Solve_void_Matrix() {
+  std::cout << "QRDecomposer Solve(Matrix) test:" << std::endl;
+  Matrix m({{2, 4, 2}, {4, 2, 3}, {2, 5, 3}}), x({{1, 2}, {2, 3}, {5, 6}});
+  QRDecomposer qr(m);
+  Matrix m1(x);
+  qr.Solve(m * x, x);
+  std::cout << "    Expected output: 1\n";
+  std::cout << "    Actual output: " << x.EqualTo(LeftDiv(m, m1)) << "\n";
+}
+
+void test_QRDecomposer_Solve_Matrix() {
+  std::cout << "QRDecomposer Solve(Matrix) test:" << std::endl;
+  Matrix m({{2, 4, 2}, {4, 2, 3}, {2, 5, 3}}), x({{1, 2}, {2, 3}, {5, 6}});
+  QRDecomposer qr(m);
+  Matrix m1 = qr.Solve(m * x);
+  std::cout << "    Expected output: 1\n";
+  std::cout << "    Actual output: " << x.EqualTo(LeftDiv(m, m1)) << "\n";
+}
+
+void test_QRDecomposer_MulQWith_Vector() {
+  std::cout << "QRDecomposer MulQWith(Vector) test:" << std::endl;
+  Matrix m({{7, 9, 1}, {6, 7, 3}, {11, 14, 3}});
+  Vector x({1, 8, 5});
+  QRDecomposer qr(m);
+  Vector v = qr.MulQWith(x);
+  std::cout << "    Expected output:1\n";
+  std::cout << "    Actual output:" << v.EqualTo(qr.GetQ() * x) << "\n";
+}
+
+void test_QRDecomposer_MulQWith_Vector_exception() {
+  std::cout << "QRDecomposer MulQWith(Vector) exception test:" << std::endl;
+  std::cout << "    Expected output:\nIncompatible formats\n";
+  try {
+    Matrix m({{2, 3}, {4, 7}});
+    Vector x({7, 8, 9});
+    QRDecomposer qr(m);
+    qr.MulQWith(x);
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+}
+
+void test_QRDecomposer_MulQWith_Matrix() {
+  std::cout << "QRDecomposer MulQWith(Matrix) test:" << std::endl;
+  Matrix m({{7, 9, 1}, {6, 7, 3}, {11, 14, 3}}), x({{1, 2}, {3, 8}, {5, 6}});
+  QRDecomposer qr(m);
+  Matrix m1 = qr.MulQWith(x);
+  std::cout << "    Expected output:1\n";
+  std::cout << "    Actual output:" << m1.EqualTo(qr.GetQ() * x) << "\n";
+}
+
+void test_QRDecomposer_MulQWith_Matrix_exception() {
+  std::cout << "QRDecomposer MulQWith(Matrix) exception test:" << std::endl;
+  std::cout << "    Expected output:\nIncompatible formats\n";
+  try {
+    Matrix m({{2, 3}, {4, 7}}), x({{7, 8, 9}});
+    QRDecomposer qr(m);
+    qr.MulQWith(x);
+  } catch (std::domain_error e) {
+    std::cout << "    Actual output:\n" << e.what();
+  }
+  std::cout << std::endl;
+}
+
+void test_QRDecomposer_MulQTWith_Vector() {
+  std::cout << "QRDecomposer MulQTWith(Vector) test:" << std::endl;
+  Matrix m({{7, 9, 1}, {6, 7, 3}, {11, 14, 3}});
+  Vector x({1, 8, 5});
+  QRDecomposer qr(m);
+  Vector v = qr.MulQWith(x);
+  std::cout << "    Expected output:1\n";
+  std::cout << "    Actual output:" << v.EqualTo(Transpose(qr.GetQ()) * x)
+            << "\n";
+}
+
+void test_QRDecomposer_MulQTWith_Matrix() {
+  std::cout << "QRDecomposer MulQTWith(Matrix) test:" << std::endl;
+  Matrix m({{7, 9, 1}, {6, 7, 3}, {11, 14, 3}}), x({{1, 2}, {3, 8}, {5, 6}});
+  QRDecomposer qr(m);
+  Matrix m1 = qr.MulQWith(x);
+  std::cout << "    Expected output:1\n";
+  std::cout << "    Actual output:" << m1.EqualTo(Transpose(qr.GetQ()) * x)
+            << "\n";
+}
+
+void test_QRDecomposer_GetQ() {
+  std::cout << "QRDecomposer GetQ test:" << std::endl;
+  Matrix m({{7, 9, 1}, {6, 7, 3}, {11, 14, 3}});
+  QRDecomposer qr(m);
+  Matrix m1({{1, 0, 0}, {0, 1, 0}, {0, 0, 1}});
+  std::cout << "    Expected output: 1\n";
+  std::cout << "    Actual output: " << qr.GetQ().EqualTo(qr.MulQWith(m1))
+            << "\n";
+}
+
+void test_QRDecomposer_GetR() {
+  std::cout << "QRDecomposer GetR test:" << std::endl;
+  Matrix m({{7, 9, 1}, {6, 7, 3}, {11, 14, 3}});
+  QRDecomposer qr(m);
+  std::cout << "    Expected output:\n";
+  std::cout << "    Actual output:\n";
+  qr.GetR().Print();
+}
+
+int main() {
+  std::cout << "Tests" << std::endl
+            << "-----------------------" << std::endl
+            << std::endl;
+  test_Vector_Chop();
+  std::cout << std::endl;
+  test_Vector_EqualTo();
+  std::cout << std::endl;
+  test_Matrix_Chop();
+  std::cout << std::endl;
+  test_Matrix_EqualTo();
+  std::cout << std::endl;
+  test_Matrix_LeftDiv_Matrix();
+  std::cout << std::endl;
+  test_Matrix_LeftDiv_Matrix_exception_1();
+  std::cout << std::endl;
+  test_Matrix_LeftDiv_Matrix_exception_2();
+  std::cout << std::endl;
+  test_Matrix_LeftDiv_Matrix_exception_3();
+  std::cout << std::endl;
+  test_Matrix_LeftDiv_Vector();
+  std::cout << std::endl;
+  test_Matrix_operator_slash_scalar();
+  std::cout << std::endl;
+  test_Matrix_operator_slash_equal_scalar();
+  std::cout << std::endl;
+  test_Matrix_operator_slash_equal_scalar_exception();
+  std::cout << std::endl;
+  test_Matrix_operator_slash_Matrix();
+  std::cout << std::endl;
+  test_Matrix_operator_slash_equal_Matrix();
+  std::cout << std::endl;
+  test_Matrix_operator_slash_equal_Matrix_exception_1();
+  std::cout << std::endl;
+  test_Matrix_operator_slash_equal_Matrix_exception_2();
+  std::cout << std::endl;
+  test_Matrix_operator_slash_equal_Matrix_exception_3();
+  std::cout << std::endl;
+  test_Matrix_Det();
+  std::cout << std::endl;
+  test_Matrix_Det_exception();
+  std::cout << std::endl;
+  test_Matrix_friend_Det();
+  std::cout << std::endl;
+  test_Matrix_Invert();
+  std::cout << std::endl;
+  test_Matrix_Invert_exception_1();
+  std::cout << std::endl;
+  test_Matrix_Invert_exception_2();
+  std::cout << std::endl;
+  test_Matrix_Inverse();
+  std::cout << std::endl;
+  test_Matrix_ReduceToRREF();
+  std::cout << std::endl;
+  test_Matrix_RREF();
+  std::cout << std::endl;
+  test_Matrix_Rank();
+  std::cout << std::endl;
+  test_Matrix_friend_Rank();
+  std::cout << std::endl;
+  test_LUDecomposer_ctor_exception_1();
+  std::cout << std::endl;
+  test_LUDecomposer_ctor_exception_2();
+  std::cout << std::endl;
+  test_LUDecomposer_Solve_void_Vector();
+  std::cout << std::endl;
+  test_LUDecomposer_Solve_void_exception_1();
+  std::cout << std::endl;
+  test_LUDecomposer_Solve_Vector();
+  std::cout << std::endl;
+  test_LUDecomposer_Solve_void_Matrix();
+  std::cout << std::endl;
+  test_LUDecomposer_Solve_Matrix();
+  std::cout << std::endl;
+  test_LUDecomposer_GetCompactLU();
+  std::cout << std::endl;
+  test_LUDecomposer_GetL();
+  std::cout << std::endl;
+  test_LUDecomposer_GetU();
+  std::cout << std::endl;
+  test_LUDecomposer_GetPermuation();
+  std::cout << std::endl;
+  test_QRDecomposer_ctor_exception_1();
+  std::cout << std::endl;
+  test_QRDecomposer_ctor_exception_2();
+  std::cout << std::endl;
+  test_QRDecomposer_Solve_void_Vector();
+  std::cout << std::endl;
+  test_QRDecomposer_Solve_void_exception_1();
+  std::cout << std::endl;
+  test_QRDecomposer_Solve_Vector();
+  std::cout << std::endl;
+  test_QRDecomposer_Solve_void_Matrix();
+  std::cout << std::endl;
+  test_QRDecomposer_Solve_Matrix();
+  std::cout << std::endl;
+  test_QRDecomposer_MulQWith_Vector();
+  std::cout << std::endl;
+  test_QRDecomposer_MulQWith_Vector_exception();
+  std::cout << std::endl;
+  test_QRDecomposer_MulQWith_Matrix();
+  std::cout << std::endl;
+  test_QRDecomposer_MulQWith_Matrix_exception();
+  std::cout << std::endl;
+  test_QRDecomposer_MulQTWith_Vector();
+  std::cout << std::endl;
+  test_QRDecomposer_MulQTWith_Matrix();
+  std::cout << std::endl;
+  test_QRDecomposer_GetQ();
+  std::cout << std::endl;
+  test_QRDecomposer_GetR();
+  std::cout << std::endl;
+  return 0;
+}
