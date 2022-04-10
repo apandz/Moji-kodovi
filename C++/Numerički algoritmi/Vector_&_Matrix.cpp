@@ -1,4 +1,3 @@
-// NA 2019/2020: Zadaća 1, Zadatak 1
 #include <cmath>
 #include <iomanip>
 #include <iostream>
