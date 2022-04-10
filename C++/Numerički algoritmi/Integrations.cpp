@@ -1,4 +1,3 @@
-// NA 2017/2018: Zadaća 4, Zadatak 2
 #include <cmath>
 #include <iostream>
 #include <vector>
