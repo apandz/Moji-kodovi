@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane minHeight="150.0" minWidth="200.0" prefHeight="150.0" prefWidth="200.0" xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ba.unsa.etf.rpr.Controller">
+   <padding>
+      <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
+   </padding>
+   <top>
+      <Label text="Dobro došli!" BorderPane.alignment="CENTER" />
+   </top>
+   <center>
+       <TilePane prefHeight="101.0" prefWidth="134.0" BorderPane.alignment="CENTER">
+           <children>
+               <Label alignment="CENTER" prefHeight="18.0" prefWidth="326.0" text="Odaberite opciju:" textAlignment="CENTER" />
+               <Button fx:id="buttonKreiraj" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#noviProzor" prefHeight="26.0" prefWidth="149.0" text="Kreiraj" textAlignment="CENTER" />
+               <Button alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" prefHeight="26.0" prefWidth="149.0" text="Pregled" />
+           </children>
+       </TilePane>
+   </center>
+   <bottom>
+   </bottom>
+   <left>
+
+   </left>
+</BorderPane>
