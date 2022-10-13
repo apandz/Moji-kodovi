@@ -1,1 +1,1 @@
-Kodovi napisani kroz rad na predmetima "Uvod u programiranje", "Tehnike programiranja", "Algoritmi i strukture podataka" i "Numerički algoritmi" na Elektrotehničkom fakultetu Sarajevo.
+Kodovi napisani kroz rad na predmetima "Uvod u programiranje", "Tehnike programiranja", "Algoritmi i strukture podataka", "Numerički algoritmi" i "Razvoj mobilnih aplikacija" na Elektrotehničkom fakultetu Sarajevo.
